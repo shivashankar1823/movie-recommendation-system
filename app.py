@@ -6,15 +6,24 @@ import gdown
 import requests
 
 # =========================
-# DOWNLOAD similarity.pkl USING gdown
+# DOWNLOAD similarity.pkl (SAFE VERSION)
 # =========================
 
 FILE_ID = "1NKP9eNUm9W-hoYpbEspYdNG16_Pu3hNV"
 
+def download_similarity():
+    url = f"https://drive.google.com/uc?id={FILE_ID}"
+    gdown.download(url, "similarity.pkl", quiet=False)
+
+# Remove corrupted file (IMPORTANT)
+if os.path.exists("similarity.pkl"):
+    if os.path.getsize("similarity.pkl") < 1000000:  # <1MB → wrong file
+        os.remove("similarity.pkl")
+
+# Download if not present
 if not os.path.exists("similarity.pkl"):
     with st.spinner("Downloading similarity.pkl... (first time only)"):
-        url = f"https://drive.google.com/uc?id={FILE_ID}"
-        gdown.download(url, "similarity.pkl", quiet=False)
+        download_similarity()
 
 
 # =========================
@@ -96,7 +105,7 @@ except FileNotFoundError as e:
 
 except Exception as e:
     st.error("❌ Error loading model files")
-    st.text(str(e))   # VERY IMPORTANT (shows real error)
+    st.text(str(e))
     st.stop()
 
 
