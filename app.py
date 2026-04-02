@@ -1,26 +1,25 @@
 import pickle
 import streamlit as st
-import requests
 import pandas as pd
 import os
+import gdown
+import requests
+
+# =========================
+# DOWNLOAD similarity.pkl USING gdown
+# =========================
 
 FILE_ID = "1NKP9eNUm9W-hoYpbEspYdNG16_Pu3hNV"
-URL = f"https://drive.google.com/uc?export=download&id={FILE_ID}"
-
-def download_file():
-    response = requests.get(URL, stream=True)
-    
-    if response.status_code == 200:
-        with open("similarity.pkl", "wb") as f:
-            for chunk in response.iter_content(1024):
-                f.write(chunk)
-    else:
-        st.error("❌ Failed to download similarity.pkl")
-        st.stop()
 
 if not os.path.exists("similarity.pkl"):
     with st.spinner("Downloading similarity.pkl... (first time only)"):
-        download_file()
+        url = f"https://drive.google.com/uc?id={FILE_ID}"
+        gdown.download(url, "similarity.pkl", quiet=False)
+
+
+# =========================
+# FETCH POSTER FUNCTION
+# =========================
 
 def fetch_poster(movie_id):
     url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=97fe2b95036aff6e1dd40cbcd3e0689b&language=en-US"
@@ -39,6 +38,10 @@ def fetch_poster(movie_id):
     
     return "https://placehold.co/500x750/333/FFFFFF?text=No+Poster"
 
+
+# =========================
+# RECOMMEND FUNCTION
+# =========================
 
 def recommend(movie):
     try:
@@ -66,25 +69,40 @@ def recommend(movie):
     return names, posters, years, ratings
 
 
+# =========================
+# STREAMLIT UI
+# =========================
+
 st.set_page_config(layout="wide")
 st.header("🎬 Movie Recommender System Using Machine Learning")
 
 
+# =========================
+# LOAD FILES SAFELY
+# =========================
+
 try:
+    # Load movie dictionary
     movies_dict = pickle.load(open('artifacts/movie_dict.pkl', 'rb'))
     movies = pd.DataFrame(movies_dict)
 
+    # Load similarity matrix
     similarity = pickle.load(open('similarity.pkl', 'rb'))
 
-except FileNotFoundError:
-    st.error("❌ Required files not found. Check your repo.")
+except FileNotFoundError as e:
+    st.error("❌ Required file not found")
+    st.text(str(e))
     st.stop()
 
 except Exception as e:
     st.error("❌ Error loading model files")
-    st.text(str(e))
+    st.text(str(e))   # VERY IMPORTANT (shows real error)
     st.stop()
 
+
+# =========================
+# UI INTERACTION
+# =========================
 
 movie_list = movies['title'].values
 
